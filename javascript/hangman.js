@@ -1,14 +1,18 @@
+let finished = false;
+
 class Hangman {
   constructor(words) {
     this.words = words;
-    this.secretWord = this.pickWord();
+    //this.secretWord = this.pickWord();
     this.letters = [];
     this.guessedLetters = "";
     this.errorsLeft = 10;
   }
 
   pickWord() {
-    return this.words[Math.floor(Math.random() * this.words.length)];
+    const resp = this.words[Math.floor(Math.random() * this.words.length)];
+    console.log(resp);
+    return resp;
   }
 
   checkIfLetter(keyCode) {
@@ -21,8 +25,8 @@ class Hangman {
   }
 
   addCorrectLetter(letter) {
+    // Be aware that the guessedLetters is not in the same order
     this.guessedLetters += letter;
-    this.checkWinner();
   }
 
   addWrongLetter(letter) {
@@ -40,10 +44,33 @@ class Hangman {
     let gl = [...this.guessedLetters].sort((a, b) => a.localeCompare(b));
     let sw = [...this.secretWord].sort((a, b) => a.localeCompare(b));
     if (gl.length != sw.length) return false;
+    // Compares each one of the letters, if any is different, returns false
     for (var i = 0; i < gl.length; ++i) {
       if (gl[i] !== sw[i]) return false;
     }
+    // All are equal, returns true
     return true;
+  }
+
+  chekIfNewFits(letter) {
+    // Returns the index of the new letter, if doesn't fit, returns -1
+    let resp = -1;
+    // Checks the number of times the letters appears on the secretWord
+    const times_in_sw = [...this.secretWord.toUpperCase()].filter(
+      l => l === letter
+    ).length;
+    // Checks the number of times the letter has appeared in guessedLetters
+    const times_in_gl = [...this.guessedLetters.toUpperCase()].filter(
+      l => l === letter
+    ).length;
+    // Returns the new index, if the new letter can fit
+    if (times_in_gl < times_in_sw) {
+      // Determines the start index
+      for (let i = 0; i <= times_in_gl; i++) {
+        resp = this.secretWord.toUpperCase().indexOf(letter, resp + 1);
+      }
+    }
+    return resp;
   }
 }
 
@@ -69,24 +96,42 @@ if (startGameButton) {
 
     // ... your code goes here
     hangmanCanvas.createBoard();
+    finished = false;
   });
 }
 
 document.addEventListener("keydown", event => {
   // console.log(event.code);
-  if (hangman.checkIfLetter(event.keyCode)) {
+  if (!finished && hangman.checkIfLetter(event.keyCode)) {
     // console.log(String.fromCharCode(event.code));
     // React to user pressing a key
     let letter = event.code[event.code.length - 1];
-    console.log(letter);
+    // Sí incluye la letra:
     if (hangman.secretWord.toUpperCase().includes(letter)) {
-      // ++ PENDIENTE TERMINAR ESTA LÓGICA +++
-      hangman.addCorrectLetter(letter);
-      hangmanCanvas.writeCorrectLetter(letter);
+        // An index and a letter must be generated if the new letter fits:
+        const idx = hangman.chekIfNewFits(letter);
+        if (idx >= 0) {
+          // Receives a letter:
+          hangman.addCorrectLetter(hangman.secretWord[idx]);
+          // Receives an index
+          hangmanCanvas.writeCorrectLetter(idx);
+          if (hangman.checkWinner()) {
+            hangmanCanvas.winner();
+            finished = true;
+          }
+      }
     } else {
-      // ++ PENDIENTE TERMINAR ESTA LÓGICA +++
-      hangman.addWrongLetter(letter);
-      hangmanCanvas.writeWrongLetter(letter);
+      // No incluye la letra
+      // Revisa si ya se había previamente fallado con esta letra
+      if (hangman.checkClickedLetters(letter)) {
+        hangmanCanvas.drawHangman(hangman.errorsLeft);
+        hangman.addWrongLetter(letter);
+        hangmanCanvas.writeWrongLetter(letter, hangman.errorsLeft);
+        if (hangman.checkGameOver()) {
+          hangmanCanvas.gameOver();
+          finished = true;
+        }
+      }
     }
   }
 });

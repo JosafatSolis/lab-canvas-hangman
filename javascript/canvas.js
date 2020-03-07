@@ -68,9 +68,9 @@ class HangmanCanvas {
       this.auxDraw(this.context, array);
     });
     // Tests:
-    for (let i = 0; i < this.secretWord.length; i++) {
-      this.writeCorrectLetter(i);
-    }
+    // for (let i = 0; i < this.secretWord.length; i++) {
+    //   this.writeCorrectLetter(i);
+    // }
     // for (let j = 9; j >= 0; j--) {
     //   setTimeout(() => {
     //     this.writeWrongLetter("ABCDEFGHIJ"[j], j);
@@ -164,7 +164,7 @@ class HangmanCanvas {
         this.context.closePath();
         break;
       default:
-        console.log("Error on drawing..");
+        console.log("Revisar canvas..");
         break;
     }
   }
